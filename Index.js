@@ -286,7 +286,7 @@ function drawExtras() {
     if (ImGui.TreeNode("info")) {
         answer("imgui version:", ImGui.GetVersion());
         inline("this site is made using", ["jsimgui", "https://github.com/mori2003/jsimgui"]);
-        inline("the website's source is on", ["github", "https://github.com/seraph1nity/SerasPage"]);
+        inline("the website's source is on", ["github", "https://github.com/Seraph1nity/seraph1nity.github.io"]);
         ImGui.TreePop();
     }
 }
