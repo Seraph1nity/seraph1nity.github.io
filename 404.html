@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- icon -->
+    <link rel="icon" href="assets/img/icon.png">
+
+    <!-- embed -->
+    <meta property="og:title" content="Sera's skidplace">
+    <meta property="og:description" content="Sera's little website for random stuff kek">
+    <meta property="og:url" content="https://Sera.is-a.dev/">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://lithium.wtf/assets/img/icon.png">
+    <meta name="theme-color" content="#696969">
+
+    <title>sera's skidroom</title>
+
+    <!-- setup -->
+    <noscript><meta http-equiv="refresh" content="0; url=/noscript"></noscript>
+    <script>
+        const hour = new Date().getHours();
+        const background = hour >= 18 || hour < 8 ? "Bg" : "NightlyBg";
+        document.documentElement.style.backgroundImage = `url("assets/img/${background}.png")`;
+    </script>
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
+
+        html {
+            background: center / cover no-repeat;
+        }
+
+        #imgui-canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="imgui-canvas"></canvas>
+    <script src="./Modules/oneko.js"></script>
+    <script type="module">
+    import { ImGui, ImVec2, ImTextureRef, ImGuiImplWeb } from "https://esm.sh/@mori2003/jsimgui@0.9.0";
+    await ImGuiImplWeb.Init({
+        canvas: document.querySelector("#imgui-canvas"),
+        enableDemos: false
+    });
+    const texture = {
+        id: ImGuiImplWeb.LoadTexture(),
+        img: new Image(),
+        loaded: false
+    };
+    texture.img.onload = () => {
+        ImGuiImplWeb.LoadTexture(texture.img, { id: texture.id });
+        texture.loaded = true;
+    };
+    texture.img.src = "./assets/img/404.png";
+    function render() {
+        ImGuiImplWeb.BeginRender();
+        const size = ImGui.GetIO().DisplaySize;
+        ImGui.SetNextWindowPos(
+            new ImVec2(size.x / 2, size.y / 2),
+            ImGui.Cond.FirstUseEver,
+            new ImVec2(0.5, 0.5)
+        );
+        ImGui.Begin("404 Not Found", null,
+            ImGui.WindowFlags.AlwaysAutoResize |
+         null //   ImGui.WindowFlags.NoCollapse
+        );
+        if (texture.loaded) {
+            ImGui.Image(
+                new ImTextureRef(texture.id),
+                new ImVec2(200, 200)
+            );
+        }
+
+        ImGui.Separator();
+        ImGui.Text("Nobody here but us chickens!");
+        ImGui.Spacing();
+        if (ImGui.Button("Go home")) {
+            window.location.href = "/";
+        }
+        ImGui.End();
+        ImGuiImplWeb.EndRender();
+        requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+    </script>
+</body>
+</html>
