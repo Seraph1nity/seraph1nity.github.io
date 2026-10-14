@@ -281,6 +281,13 @@ function drawExtras() {
         ImGui.Spacing();
         for (const quote of quotes) ImGui.Text(quote);
         ImGui.TreePop();
+  }
+
+    if (ImGui.TreeNode("subplaces")) {
+        ImGui.Text("here are some subplaces of this website with cool stuff:");
+        ImGui.Spacing();
+        inline([">Sera's Linux Runner", "./linux.html"]);
+        ImGui.TreePop();
     }
 
     if (ImGui.TreeNode("info")) {
