@@ -21,7 +21,8 @@
     <noscript><meta http-equiv="refresh" content="0; url=/noscript"></noscript>
     <script>
         const hour = new Date().getHours();
-        const background = hour >= 18 || hour < 8 ? "Bg" : "NightlyBg";
+        const isNight = hour >= 18 || hour < 8;
+        const background = isNight ? "NightlyBg" : "Bg";
         document.documentElement.style.backgroundImage = `url("assets/img/${background}.png")`;
     </script>
 

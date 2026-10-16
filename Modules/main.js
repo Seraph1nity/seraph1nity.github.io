@@ -39,7 +39,9 @@ const wallets = [
 ];
 
 const quotes = [
-    `"give me 6 hours to chop down a tree and i will spend the first four gooning" - Abraham lincoln`
+  `"give me 6 hours to chop down a tree and i will spend the first four gooning" - Abraham lincoln`,
+  `"sephy nyan has femboy potential" - KaiKai`,
+  `"I built these walls too high , now I'm safe from the storm at the cost of the sun" - Ryu`
 ];
 
 const weatherDescriptions = {
@@ -53,7 +55,6 @@ const weatherDescriptions = {
 };
 
 // music
-
 class MusicPlayer {
     constructor(tracks) {
         this.tracks = tracks;
@@ -204,15 +205,48 @@ function image(texture, scale) {
 
 const windowMargin = 10;
 const windowGap = 3;
-let nextWindowY = windowMargin;
+let nextLeftY = windowMargin;
+let nextRightY = windowMargin;
 
-function drawWindow(title, drawContents) {
-    ImGui.SetNextWindowPos(new ImVec2(windowMargin, nextWindowY), ImGui.Cond.FirstUseEver);
+
+function drawWindow(title, drawContents, maybeside = "left", width = 0) {
+    const canvas = document.querySelector("#imgui-canvas");
+    const isRight = maybeside === "right";
+
+    ImGui.SetNextWindowPos(
+        new ImVec2(
+            isRight ? canvas.clientWidth - windowMargin : windowMargin,
+            isRight ? nextRightY : nextLeftY
+        ),
+        ImGui.Cond.FirstUseEver,
+        new ImVec2(isRight ? 1 : 0, 0)
+    );
+
+    if (width > 0) {
+        ImGui.SetNextWindowSize(
+            new ImVec2(width, 0),
+            ImGui.Cond.FirstUseEver
+        );
+    }
+
     ImGui.SetNextWindowCollapsed(true, ImGui.Cond.FirstUseEver);
-    if (ImGui.Begin(title, null, ImGui.WindowFlags.AlwaysAutoResize)) drawContents();
-    nextWindowY += ImGui.GetWindowHeight() + windowGap;
+
+    if (ImGui.Begin(title, null, ImGui.WindowFlags.AlwaysAutoResize)) {
+        drawContents();
+    }
+
+    const nextY = (isRight ? nextRightY : nextLeftY)
+        + ImGui.GetWindowHeight() + windowGap;
+
+    if (isRight) {
+        nextRightY = nextY;
+    } else {
+        nextLeftY = nextY;
+    }
+
     ImGui.End();
 }
+
 
 function drawAbout() {
     ImGui.BeginGroup();
@@ -220,7 +254,7 @@ function drawAbout() {
     ImGui.EndGroup();
     ImGui.SameLine(0, 8);
     ImGui.BeginGroup();
-    ImGui.Text("hi, i'm Sera.\ni like eating hydrogen (irony)\ni like programming in Rust,Python,Javascript,Lua and CSharp (Rust and Lua being my fav langs)\nwawaborea");
+    ImGui.Text("hi, i'm Sera.\ni like eating hydrogen (irony)\ni like programming in Rust,Python,Javascript,Lua and CSharp (Rust and Lua being my fav langs)\nwawaborean");
     ImGui.Spacing();
     ImGui.Text(`my time: ${fattytime.format()}\nmy lovely weather: ${weather}`);
     ImGui.EndGroup();
@@ -279,7 +313,7 @@ function drawExtras() {
     if (ImGui.TreeNode("quotes")) {
         ImGui.Text("dm me on discord to add a quote");
         ImGui.Spacing();
-        for (const quote of quotes) ImGui.Text(quote);
+        for (const quote of quotes) ImGui.Text("> " + quote);
         ImGui.TreePop();
   }
 
@@ -336,18 +370,21 @@ function drawMusicPlayer() {
 }
 
 // render
-
 function render() {
-    ImGuiImplWeb.BeginRender();
-    nextWindowY = windowMargin;
-    drawWindow("about", drawAbout);
-    drawWindow("projects", drawProjects);
-    drawWindow("links", drawLinks);
-    drawWindow("contact", drawContact);
-    drawWindow("extras", drawExtras);
-    drawWindow("music player", drawMusicPlayer);
-    ImGuiImplWeb.EndRender();
-    requestAnimationFrame(render);
+  ImGuiImplWeb.BeginRender();
+  nextLeftY = windowMargin;
+  nextRightY = windowMargin;
+  drawWindow("about", drawAbout, "left");
+  drawWindow("projects", drawProjects, "left");
+  drawWindow("links", drawLinks, "left");
+  drawWindow("contact", drawContact, "left");
+  drawWindow("extras", drawExtras, "left");
+  drawWindow("music player", drawMusicPlayer, "left");
+
+
+//   drawWindow("newsletters", drawBlog,"right",400)
+  ImGuiImplWeb.EndRender();
+  requestAnimationFrame(render);
 }
 
 fetchWeather();

@@ -21,7 +21,8 @@
     <noscript><meta http-equiv="refresh" content="0; url=/noscript.html"></noscript>
     <script>
         const hour = new Date().getHours();
-        const background = hour >= 18 || hour < 8 ? "Bg" : "NightlyBg";
+        const isNight = hour >= 18 || hour < 8;
+        const background = isNight ? "NightlyBg" : "Bg";
         document.documentElement.style.backgroundImage = `url("assets/img/${background}.png")`;
     </script>
 
@@ -43,11 +44,24 @@
             width: 100vw;
             height: 100vh;
         }
+
+        #three-container {
+            width: 100%;
+            height: 300px;
+            overflow: hidden;
+        }
+
+        #three-container canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body>
     <canvas id="imgui-canvas"></canvas>
+    <div id="three-container"></div>
     <script src="./Modules/oneko.js"></script>
-    <script type="module" src="Index.js"></script>
+    <script type="module" src="./Modules/main.js"></script>
 </body>
 </html>
