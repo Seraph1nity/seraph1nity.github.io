@@ -37,7 +37,7 @@ const quotes = [
   `"give me 6 hours to chop down a tree and i will spend the first four gooning" - Abraham lincoln`,
   `"sephy nyan has femboy potential" - kaikai`,
   `"I built these walls too high , now I'm safe from the storm at the cost of the sun" - ryu`,
-  `"Shoot for the moon, even if you miss you'll land among the stars" - meimei`
+  `"Shoot for the moon, even if you miss you'll land among the stars" - meimei`,
   `"Sometimes to really love is to let go and never look back" - vlad`
 ];
 
