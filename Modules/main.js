@@ -33,15 +33,12 @@ const socials = [
     { name: "namemc", url: "https://namemc.com/profile/TheCatOfTheDark", handle: "TheCatOfTheDark" }
 ];
 
-const wallets = [
-    { name: "monero", address: "47B8w6uBZec2XxrUpkAuWo1EDHoKX3tLdMvLN9XpESfgL3RivKTwE66L6Uk59xkC5qSyDvmTX1f1HCMffdQgZnxU1AEp8ZP" },
-    { name: "bitcoin", address: "bc1qhs2pnzz05ueml8tk73228prkfaazr6w64p0euq" },
-];
-
 const quotes = [
   `"give me 6 hours to chop down a tree and i will spend the first four gooning" - Abraham lincoln`,
-  `"sephy nyan has femboy potential" - KaiKai`,
-  `"I built these walls too high , now I'm safe from the storm at the cost of the sun" - Ryu`
+  `"sephy nyan has femboy potential" - kaikai`,
+  `"I built these walls too high , now I'm safe from the storm at the cost of the sun" - ryu`,
+  `"Shoot for the moon, even if you miss you'll land among the stars" - meimei`
+  `"Sometimes to really love is to let go and never look back" - vlad`
 ];
 
 const weatherDescriptions = {
@@ -298,6 +295,8 @@ function drawLinks() {
 function drawContact() {
     inline("email:", ["seraphinity@national.shitposting.agency", "mailto:seraphinity@national.shitposting.agency"]);
     inline("discord:", ["@seraphinity_.", "https://discord.com/users/1457638696173178882"]);
+    inline("matrix:", ["seraphinity:matrix.org","https://matrix.to/#/@seraphinity:matrix.org"]);
+    inline("PGP key:", ["public key here", "./assets/misc/PGP.asc"])
 }
 
 
@@ -311,10 +310,13 @@ function drawExtras() {
     }
 
     if (ImGui.TreeNode("quotes")) {
-        ImGui.Text("dm me on discord to add a quote");
-        ImGui.Spacing();
-        for (const quote of quotes) ImGui.Text("> " + quote);
-        ImGui.TreePop();
+      ImGui.Text("dm me on discord to add a quote");
+      ImGui.Spacing();
+      const geen = (120 | (153 << 8) | (34 << 16) | (255 << 24)) >>> 0;
+      ImGui.PushStyleColor(ImGui.Col.Text, geen);
+      for (const quote of quotes){ ImGui.Text("> " + quote);};
+      ImGui.PopStyleColor();
+      ImGui.TreePop();
   }
 
     if (ImGui.TreeNode("subplaces")) {
