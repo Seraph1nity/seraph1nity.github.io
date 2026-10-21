@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Conway's Game of Life — 100×100</title>
+<style>
+  :root { color-scheme: dark; background: #000; }
+  * { box-sizing: border-box; }
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: #000;
+  }
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    image-rendering: pixelated;
+    touch-action: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="life" aria-label="Conway's Game of Life, 100 by 100 cells"></canvas>
+<script>
+(() => {
+  'use strict';
+
+  const SIDE = 100;
+  const CELL_COUNT = SIDE * SIDE;
+  const STRIDE = SIDE + 2; // A permanently dead border removes edge checks during simulation.
+  const STATE_SIZE = STRIDE * STRIDE;
+  const SAVE_KEY = 'conways-life-webgl-100x100-v1';
+  const STEP_MS = 60;
+  const SAVE_INTERVAL_MS = 5000;
+  const MAX_RENDER_DIMENSION = 800;
+
+  const canvas = document.getElementById('life');
+  const gl = canvas.getContext('webgl2', {
+    alpha: false,
+    antialias: false,
+    depth: false,
+    stencil: false,
+    preserveDrawingBuffer: false,
+    powerPreference: 'low-power'
+  });
+
+  if (!gl) {
+    document.title = 'Conway’s Game of Life — WebGL2 required';
+    console.error('This page requires WebGL 2.');
+    return;
+  }
+
+  const vertexSource = `#version 300 es
+    const vec2 TRIANGLE[3] = vec2[3](
+      vec2(-1.0, -1.0),
+      vec2( 3.0, -1.0),
+      vec2(-1.0,  3.0)
+    );
+    void main() {
+      gl_Position = vec4(TRIANGLE[gl_VertexID], 0.0, 1.0);
+    }
+  `;
+
+  const renderSource = `#version 300 es
+    precision highp float;
+    precision highp int;
+    uniform sampler2D u_state;
+    uniform vec2 u_resolution;
+    out vec4 outColor;
+    void main() {
+      vec2 centered = gl_FragCoord.xy - (u_resolution * 0.5);
+      float boardSize = min(u_resolution.x, u_resolution.y);
+      if (abs(centered.x) > boardSize * 0.5 || abs(centered.y) > boardSize * 0.5) {
+        outColor = vec4(0.0, 0.0, 0.0, 1.0);
+        return;
+      }
+
+      vec2 uv = centered / boardSize + 0.5;
+      vec2 scaled = uv * 100.0;
+      ivec2 cell = clamp(ivec2(floor(scaled)), ivec2(0), ivec2(99));
+      bool alive = texelFetch(u_state, cell, 0).r > 0.0;
+
+      // Target approximately one output pixel of black spacing between cells.
+      float edgeWidth = min(0.45, 100.0 / max(boardSize, 1.0));
+      vec2 insideCell = fract(scaled);
+      bool edge = insideCell.x < edgeWidth || insideCell.y < edgeWidth ||
+                  insideCell.x > 1.0 - edgeWidth || insideCell.y > 1.0 - edgeWidth;
+      float value = (alive && !edge) ? 1.0 : 0.0;
+      outColor = vec4(value, value, value, 1.0);
+    }
+  `;
+
+  function compileShader(type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      const message = gl.getShaderInfoLog(shader) || 'Unknown shader compile error';
+      gl.deleteShader(shader);
+      throw new Error(message);
+    }
+    return shader;
+  }
+
+  function createProgram(fragmentSource) {
+    const program = gl.createProgram();
+    const vertex = compileShader(gl.VERTEX_SHADER, vertexSource);
+    const fragment = compileShader(gl.FRAGMENT_SHADER, fragmentSource);
+    gl.attachShader(program, vertex);
+    gl.attachShader(program, fragment);
+    gl.linkProgram(program);
+    gl.deleteShader(vertex);
+    gl.deleteShader(fragment);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      const message = gl.getProgramInfoLog(program) || 'Unknown program link error';
+      gl.deleteProgram(program);
+      throw new Error(message);
+    }
+    return program;
+  }
+
+  let renderProgram;
+  try {
+    renderProgram = createProgram(renderSource);
+  } catch (error) {
+    console.error('Could not initialize Conway’s Game of Life:', error);
+    document.title = 'Conway’s Game of Life — WebGL error';
+    return;
+  }
+
+  const renderStateLocation = gl.getUniformLocation(renderProgram, 'u_state');
+  const resolutionLocation = gl.getUniformLocation(renderProgram, 'u_resolution');
+
+  let generation = 0;
+  let lastSave = 0;
+  let stateNeedsSave = true;
+  let renderNeedsUpdate = true;
+
+  // The CPU owns the authoritative board. The dead padded border makes each
+  // generation a simple eight-neighbor sum without per-cell boundary branches.
+  let cells = new Uint8Array(STATE_SIZE);
+  let nextCells = new Uint8Array(STATE_SIZE);
+  const textureCells = new Uint8Array(CELL_COUNT);
+
+  function packState(state) {
+    const packed = new Uint8Array(Math.ceil(CELL_COUNT / 8));
+    let bitIndex = 0;
+    for (let y = 1; y <= SIDE; y++) {
+      const row = y * STRIDE + 1;
+      for (let x = 0; x < SIDE; x++, bitIndex++) {
+        if (state[row + x]) packed[bitIndex >> 3] |= 1 << (bitIndex & 7);
+      }
+    }
+    return packed;
+  }
+
+  function unpackState(packed) {
+    const state = new Uint8Array(STATE_SIZE);
+    let bitIndex = 0;
+    for (let y = 1; y <= SIDE; y++) {
+      const row = y * STRIDE + 1;
+      for (let x = 0; x < SIDE; x++, bitIndex++) {
+        state[row + x] = (packed[bitIndex >> 3] >> (bitIndex & 7)) & 1;
+      }
+    }
+    return state;
+  }
+
+  function loadSavedState() {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return null;
+      const saved = JSON.parse(raw);
+      if (saved.version !== 1 || typeof saved.cells !== 'string') return null;
+      const binary = atob(saved.cells);
+      if (binary.length !== Math.ceil(CELL_COUNT / 8)) return null;
+      const packed = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) packed[i] = binary.charCodeAt(i);
+      generation = Number.isSafeInteger(saved.generation) && saved.generation >= 0
+        ? saved.generation
+        : 0;
+      return unpackState(packed);
+    } catch (error) {
+      console.warn('Could not load the saved board:', error);
+      return null;
+    }
+  }
+
+  function randomState() {
+    const state = new Uint8Array(STATE_SIZE);
+    for (let y = 1; y <= SIDE; y++) {
+      const row = y * STRIDE + 1;
+      for (let x = 0; x < SIDE; x++) state[row + x] = Math.random() < 0.27 ? 1 : 0;
+    }
+    return state;
+  }
+
+  function copyStateToTexturePixels(state) {
+    for (let y = 0; y < SIDE; y++) {
+      const sourceStart = (y + 1) * STRIDE + 1;
+      textureCells.set(state.subarray(sourceStart, sourceStart + SIDE), y * SIDE);
+    }
+  }
+
+  const stateTexture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, stateTexture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  cells = loadSavedState() || randomState();
+  copyStateToTexturePixels(cells);
+  // R8 stores one byte per cell rather than four RGBA bytes (75% less texture data).
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, SIDE, SIDE, 0, gl.RED, gl.UNSIGNED_BYTE, textureCells);
+  gl.bindTexture(gl.TEXTURE_2D, null);
+
+  function uploadState() {
+    copyStateToTexturePixels(cells);
+    gl.bindTexture(gl.TEXTURE_2D, stateTexture);
+    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, SIDE, SIDE, gl.RED, gl.UNSIGNED_BYTE, textureCells);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+  }
+
+  function saveState(force = false) {
+    if (!force && !stateNeedsSave) return;
+    try {
+      const packed = packState(cells);
+      let binary = '';
+      for (let i = 0; i < packed.length; i++) binary += String.fromCharCode(packed[i]);
+      localStorage.setItem(SAVE_KEY, JSON.stringify({
+        version: 1,
+        cells: btoa(binary),
+        generation
+      }));
+      lastSave = performance.now();
+      stateNeedsSave = false;
+    } catch (error) {
+      console.warn('Could not save the board (storage may be disabled or full):', error);
+    }
+  }
+
+  function step() {
+    const current = cells;
+    const next = nextCells;
+    for (let y = 1; y <= SIDE; y++) {
+      const row = y * STRIDE;
+      for (let x = 1; x <= SIDE; x++) {
+        const i = row + x;
+        const neighbors =
+          current[i - STRIDE - 1] + current[i - STRIDE] + current[i - STRIDE + 1] +
+          current[i - 1] + current[i + 1] +
+          current[i + STRIDE - 1] + current[i + STRIDE] + current[i + STRIDE + 1];
+        const alive = current[i] === 1;
+        next[i] = (neighbors === 3 || (alive && neighbors === 2)) ? 1 : 0;
+      }
+    }
+    cells = next;
+    nextCells = current;
+    generation++;
+    stateNeedsSave = true;
+    renderNeedsUpdate = true;
+    uploadState();
+  }
+
+  function resizeCanvas() {
+    const dpr = window.devicePixelRatio || 1;
+    const physicalWidth = Math.max(1, Math.round(window.innerWidth * dpr));
+    const physicalHeight = Math.max(1, Math.round(window.innerHeight * dpr));
+    const scale = Math.min(1, MAX_RENDER_DIMENSION / Math.max(physicalWidth, physicalHeight));
+    const width = Math.max(1, Math.round(physicalWidth * scale));
+    const height = Math.max(1, Math.round(physicalHeight * scale));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+      renderNeedsUpdate = true;
+    }
+  }
+
+  function render() {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.useProgram(renderProgram);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, stateTexture);
+    gl.uniform1i(renderStateLocation, 0);
+    gl.uniform2f(resolutionLocation, canvas.width, canvas.height);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    renderNeedsUpdate = false;
+  }
+
+  function pointerToCell(event) {
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const yFromBottom = rect.bottom - event.clientY;
+    const boardSize = Math.min(rect.width, rect.height);
+    const left = (rect.width - boardSize) * 0.5;
+    const bottom = (rect.height - boardSize) * 0.5;
+    const col = Math.floor((x - left) / boardSize * SIDE);
+    const row = Math.floor((yFromBottom - bottom) / boardSize * SIDE);
+    if (col < 0 || col >= SIDE || row < 0 || row >= SIDE) return null;
+    return { col, row };
+  }
+
+  canvas.addEventListener('pointerdown', event => {
+    if (event.button !== 0 && event.pointerType === 'mouse') return;
+    const cell = pointerToCell(event);
+    if (!cell) return;
+    event.preventDefault();
+    const index = (cell.row + 1) * STRIDE + cell.col + 1;
+    cells[index] = cells[index] ? 0 : 1;
+    stateNeedsSave = true;
+    renderNeedsUpdate = true;
+    uploadState();
+    render();
+    saveState(true);
+  });
+  canvas.addEventListener('contextmenu', event => event.preventDefault());
+
+  window.addEventListener('resize', resizeCanvas, { passive: true });
+  window.addEventListener('pagehide', () => saveState(true));
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      saveState(true);
+    } else {
+      lastFrameTime = performance.now();
+      accumulator = 0;
+    }
+  });
+
+  let lastFrameTime = null;
+  let accumulator = 0;
+  function frame(now) {
+    resizeCanvas();
+
+    if (document.hidden) {
+      lastFrameTime = now;
+      accumulator = 0;
+    } else {
+      if (lastFrameTime === null) lastFrameTime = now;
+      accumulator += Math.min(now - lastFrameTime, STEP_MS * 5);
+      lastFrameTime = now;
+
+      let steps = 0;
+      while (accumulator >= STEP_MS && steps < 5) {
+        step();
+        accumulator -= STEP_MS;
+        steps++;
+      }
+      // Avoid an unbounded catch-up loop after a slow frame.
+      if (steps === 5) accumulator = 0;
+    }
+
+    if (renderNeedsUpdate) render();
+    if (now - lastSave >= SAVE_INTERVAL_MS) saveState();
+    requestAnimationFrame(frame);
+  }
+
+  resizeCanvas();
+  uploadState();
+  saveState(true);
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

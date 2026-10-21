@@ -1,3 +1,12 @@
+/*
+ * Hallo skidder
+ * im here just to give a shoutout to lithium_1on,for the original website source and the functions
+ * please check the original one and star his repo
+ * > https://lithium.wtf/
+ * > https://github.com/lithium1on/lithium
+ *
+ * - Seraph1nity
+*/
 import { ImGui, ImVec2, ImTextureRef, ImGuiImplWeb } from "https://esm.sh/@mori2003/jsimgui@0.9.0";
 
 // data
@@ -36,9 +45,10 @@ const socials = [
 const quotes = [
   `"give me 6 hours to chop down a tree and i will spend the first four gooning" - Abraham lincoln`,
   `"sephy nyan has femboy potential" - kaikai`,
-  `"I built these walls too high , now I'm safe from the storm at the cost of the sun" - ryu`,
+  `"I built these walls high, now I'm safe from the storm at the cost of the sun" - ryu`,
   `"Shoot for the moon, even if you miss you'll land among the stars" - meimei`,
-  `"Sometimes to really love is to let go and never look back" - vlad`
+  `"Sometimes to really love is to let go and never look back" - vlad`,
+  `"i sit here broken hearted came to shit but only farted" - moldy`
 ];
 
 const weatherDescriptions = {
@@ -274,12 +284,12 @@ function drawProjects() {
         ImGui.TreePop();
     }
 
-    if (ImGui.TreeNode("spawn.bunker")) {
-        ImGui.Text("le evil server known as spammy burken,made for archiving scripts and RBXMs,plus deobfuscating code and ragebaiting");
-        ImGui.Text("while it only becomes active once every year, it has a LOT of scripts and a bunch of sources");
-        ImGui.Text("Osage approved");
-        inline("join le bunker:", ["https://discord.gg/MvVBbftUYm"]);
-    ImGui.TreePop();
+    if (ImGui.TreeNode("ARMer")) {
+      inline("VM obfuscation for luaU with macros and a very kewl anti-env (woah)");
+      //image()
+      inline("while it is in beta with no support for sUnc or chunk loading plus having a lazy bytecode fragmentation,it cant be deobfuscated by ExoEnv!!!!!!! (no AIs skidding my code) ");
+      inline("it is currently private and only usable by whitelisted people,so yeah,if you wanna try making it yourself :p")
+      ImGui.TreePop()
     }
 
     ImGui.Spacing();
@@ -302,7 +312,6 @@ function drawContact() {
 
 function drawExtras() {
     if (ImGui.TreeNode("questions")) {
-        answer("can i steal this?", "nuh uh");
         answer("are you a female", "maybe");
         answer("ur music sucks i wanna submit soem!!", "no my music doesnt suck grrr but if you wanna submit contact me lol");
         inline("sera pls feet pics", ["here", "assets/img/feetpics.gif"]);
@@ -329,6 +338,7 @@ function drawExtras() {
     if (ImGui.TreeNode("info")) {
         answer("imgui version:", ImGui.GetVersion());
         inline("this site is made using", ["jsimgui", "https://github.com/mori2003/jsimgui"]);
+        inline("this website was originally forked from", ["@lithium_1on", "https://lithium.wtf/"], ",shoutout to them");
         inline("the website's source is on", ["github", "https://github.com/Seraph1nity/seraph1nity.github.io"]);
         ImGui.TreePop();
     }
