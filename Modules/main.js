@@ -37,7 +37,7 @@ const playlist = [
 ];
 
 const socials = [
-    { name: "twitter (nophono calls ts X)", url: "https://x.com/SeraphTheSpawn", handle: "@SeraphTheSpawn" },
+    { name: "twitter (nophono calls ts X)", url: "https://x.com/seraph1nity", handle: "@seraph1nity" },
     { name: "github", url: "https://github.com/seraph1nity", handle: "@seraph1nity" },
     { name: "namemc", url: "https://namemc.com/profile/TheCatOfTheDark", handle: "TheCatOfTheDark" }
 ];
