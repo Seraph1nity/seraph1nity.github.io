@@ -12,28 +12,14 @@ import { ImGui, ImVec2, ImTextureRef, ImGuiImplWeb } from "https://esm.sh/@mori2
 // data
 
 const playlist = [
+    { name: ":3", file: "assets/audio/:3.wav", icon: "assets/img/music/:3.jpg", author: "tangermusic" },
+    { name: "desu-yo?", file: "assets/audio/desuyo.opus", icon: "assets/img/music/desuyo.jpg", author: "sheqate" },
+    { name: "anyone can find love (except you)", file: "assets/audio/love.opus", icon: "assets/img/music/love.jpg", author: "hkmori & glitch cat" },
+    { name: "running on a rope", file: "assets/audio/running.opus", icon: "assets/img/music/running.jpg", author: "tangermusic & Treb" },
+    { name: "somewhere, someday", file: "assets/audio/somewhere.opus", icon: "assets/img/music/somewhere.jpg", author: "tangermusic" },
+    { name: "virtual insanity", file: "assets/audio/vinsanity.opus", icon: "assets/img/music/vinsanity.jpg", author: "hkmori & glitch cat" },
     { name: "moron", file: "assets/audio/moron.opus", icon: "assets/img/music/moron.jpg", author: "m1v & luvwillow" },
-    { name: "antichrist", file: "assets/audio/antichrist.opus", icon: "assets/img/music/m1v.jpg", author: "m1v & vanity" },
     { name: "a hardstyle christmas", file: "assets/audio/hardstyle.opus", icon: "assets/img/music/hardstyle.jpg", author: "vanity, d3r & m1v" },
-    { name: "m0nster high", file: "assets/audio/monster.opus", icon: "assets/img/music/monster.jpg", author: "hubithekid, kets4eki,\nwujek, fendisuicide" },
-    { name: "posted up", file: "assets/audio/postedup.opus", icon: "assets/img/music/postedup.jpg", author: "yati & lchigo, d3r" },
-    { name: "she's like a superstar", file: "assets/audio/superstar.opus", icon: "assets/img/music/superstar.jpg", author: "d3r & wasty" },
-    { name: "fed", file: "assets/audio/fed.opus", icon: "assets/img/music/m1v.jpg", author: "m1v" },
-    { name: "keep yourself safe", file: "assets/audio/kys.opus", icon: "assets/img/music/kys.jpg", author: "cy4ne & \niwannabemissed" },
-    { name: "hello kitty camo", file: "assets/audio/hkc.opus", icon: "assets/img/music/hkc.jpg", author: "disoc8" },
-    { name: "would u notice", file: "assets/audio/notice.opus", icon: "assets/img/music/notice.jpg", author: "overtonight" },
-    { name: "edgy", file: "assets/audio/edgy.opus", icon: "assets/img/music/edgy.jpg", author: "luvwillow" },
-    { name: "kylie", file: "assets/audio/kylie.opus", icon: "assets/img/music/kylie.jpg", author: "kets4eki, KidSnorlax,\nPröz, lunarr" },
-    { name: "turn it up", file: "assets/audio/tiu.opus", icon: "assets/img/music/tiu.jpg", author: "skypebf & 6arelyhuman" },
-    { name: "stay_w_me original", file: "assets/audio/swmo.opus", icon: "assets/img/music/m1v.jpg", author: "m1v" },
-    { name: "love bomb", file: "assets/audio/love.opus", icon: "assets/img/music/love.jpg", author: "d3r" },
-    { name: "seksualna niebezpieczna", file: "assets/audio/seksualna.opus", icon: "assets/img/music/seksualna.jpg", author: "hubithekid, kets4eki,\nlunarr" },
-    { name: "TeAsE", file: "assets/audio/tease.opus", icon: "assets/img/music/m1v.jpg", author: "m1v" },
-    { name: "scars 4 u", file: "assets/audio/scars.opus", icon: "assets/img/music/scars.jpg", author: "luvwillow" },
-    { name: "thief (wasty) 1/27/2023", file: "assets/audio/thief.opus", icon: "assets/img/music/thief.jpg", author: "d3r archive (wasty)" },
-    { name: "4u", file: "assets/audio/4u.opus", icon: "assets/img/music/4u.jpg", author: "lunarr" },
-    { name: "molly in my backpack", file: "assets/audio/molly.opus", icon: "assets/img/music/molly.jpg", author: "kets4eki, Crescent,\nwujek" },
-    { name: "old memories!", file: "assets/audio/oldmemories.opus", icon: "assets/img/music/m1v2.jpg", author: "m0v / m1v" }
 ];
 
 const socials = [
@@ -74,8 +60,23 @@ class MusicPlayer {
         this.audio.addEventListener("error", () => { this.loading = false; });
         this.audio.addEventListener("ended", () => this.next());
         this.select(0, false);
-    }
+      let musicplayed = false;
 
+      const playgoesvrr = () => {
+          if (musicplayed) return;
+          musicplayed = true;
+
+          this.play();
+
+          document.removeEventListener("click", playgoesvrr);
+          document.removeEventListener("keydown", playgoesvrr);
+          document.removeEventListener("touchstart", playgoesvrr);
+      };
+
+      document.addEventListener("click", playgoesvrr);
+      document.addEventListener("keydown", playgoesvrr);
+      document.addEventListener("touchstart", playgoesvrr);
+    }
     get track() {
         return this.tracks[this.index];
     }
@@ -236,8 +237,10 @@ function drawWindow(title, drawContents, maybeside = "left", width = 0) {
         );
     }
 
-    ImGui.SetNextWindowCollapsed(true, ImGui.Cond.FirstUseEver);
-
+    ImGui.SetNextWindowCollapsed(
+      title !== "music player",
+      ImGui.Cond.FirstUseEver
+    );
     if (ImGui.Begin(title, null, ImGui.WindowFlags.AlwaysAutoResize)) {
         drawContents();
     }
