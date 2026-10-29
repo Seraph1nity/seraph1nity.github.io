@@ -331,7 +331,10 @@ function drawExtras() {
     if (ImGui.TreeNode("subplaces")) {
         ImGui.Text("here are some subplaces of this website with cool stuff:");
         ImGui.Spacing();
-        inline([">Sera's Linux Runner", "./linux.html"]);
+        inline(["> Sera's linux runner", "./linux.html"]);
+        inline(["> Conway's game of life", "./life.html"]);
+        inline(["> Sera's fumo viewer", "./byte.html"]);
+
         ImGui.TreePop();
     }
 

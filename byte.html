@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- icon -->
+    <link rel="icon" href="./assets/img/Icon.png">
+
+    <!-- embed -->
+    <meta property="og:title" content="Sera's skidplace">
+    <meta property="og:description" content="Sera's little website for random stuff kek">
+    <meta property="og:url" content="https://Sera.is-a.dev/">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://seraph1nity.github.io/assets/img/Icon.png">
+    <meta name="theme-color" content="#696969">
+
+    <title>sera's skidplace</title>
+
+    <!-- setup -->
+    <noscript><meta http-equiv="refresh" content="0; url=/noscript.html"></noscript>
+
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: grab;
+}
+
+canvas:active {
+    cursor: grabbing;
+}
+
+#zoom {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#zoom button {
+    width: 42px;
+    height: 42px;
+    border: 1px solid #333;
+    border-radius: 6px;
+    background: #111;
+    color: #fff;
+    font: 24px monospace;
+    cursor: pointer;
+}
+
+#zoom button:hover {
+    background: #292929;
+}
+
+#zoom button:active {
+    background: #444;
+}
+</style>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+    }
+}
+</script>
+</head>
+
+<body>
+
+<div id="zoom">
+    <button id="zoom-in" aria-label="Zoom in">+</button>
+    <button id="zoom-out" aria-label="Zoom out">−</button>
+</div>
+
+    <script type="module">
+import*as THREE from"three";import{GLTFLoader}from"three/addons/loaders/GLTFLoader.js";import{OrbitControls}from"three/addons/controls/OrbitControls.js";import{RoomEnvironment}from"three/addons/environments/RoomEnvironment.js";const scene=new THREE.Scene;scene.background=new THREE.Color(0);const renderer=new THREE.WebGLRenderer({antialias:!0,powerPreference:"high-performance"});renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5)),renderer.setSize(window.innerWidth,window.innerHeight),renderer.outputColorSpace=THREE.SRGBColorSpace,renderer.toneMapping=THREE.ACESFilmicToneMapping,renderer.toneMappingExposure=1,renderer.shadowMap.enabled=!0,renderer.shadowMap.type=THREE.PCFSoftShadowMap,document.body.appendChild(renderer.domElement);const camera=new THREE.PerspectiveCamera(40,window.innerWidth/window.innerHeight,.01,1e3),controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=!0,controls.dampingFactor=.06,controls.enablePan=!1,controls.enableZoom=!1,controls.rotateSpeed=.8,controls.minPolarAngle=.05,controls.maxPolarAngle=Math.PI-.05,scene.add(new THREE.HemisphereLight(14805759,3682619,1.5));const keyLight=new THREE.DirectionalLight(16772309,3.5);keyLight.position.set(4,7,5),keyLight.castShadow=!0,keyLight.shadow.mapSize.set(1024,1024),keyLight.shadow.bias=-3e-4,keyLight.shadow.normalBias=.02,keyLight.shadow.radius=4,scene.add(keyLight);const fillLight=new THREE.DirectionalLight(11915007,1.3);fillLight.position.set(-5,3,-4),scene.add(fillLight);const rimLight=new THREE.DirectionalLight(16777215,2);rimLight.position.set(-3,4,5),scene.add(rimLight);const pmrem=new THREE.PMREMGenerator(renderer),environment=new RoomEnvironment,environmentTarget=pmrem.fromScene(environment,.04);scene.environment=environmentTarget.texture,scene.environmentIntensity=.8,environment.dispose(),pmrem.dispose();const params=new URLSearchParams(window.location.search),modelURL=params.get("mod")||"./assets/misc/capri.glb";let modelRadius=1,modelCenter=new THREE.Vector3;async function loadModel(){try{const e=new GLTFLoader,o=(await e.loadAsync(modelURL)).scene;o.updateMatrixWorld(!0);const t=(new THREE.Box3).setFromObject(o),n=t.getCenter(new THREE.Vector3),r=t.getSize(new THREE.Vector3),a=Math.max(r.x,r.y,r.z);if(!Number.isFinite(a)||a<=0)throw new Error("Invalid model dimensions");const i=2/a;o.scale.multiplyScalar(i),o.position.sub(n.multiplyScalar(i)),o.updateMatrixWorld(!0),o.traverse(e=>{if(!e.isMesh)return;e.castShadow=!0,e.receiveShadow=!0;const o=Array.isArray(e.material)?e.material:[e.material];for(const e of o)(e?.isMeshStandardMaterial||e?.isMeshPhysicalMaterial)&&(e.envMapIntensity=1)}),scene.add(o);const s=(new THREE.Box3).setFromObject(o);modelCenter=s.getCenter(new THREE.Vector3),modelRadius=s.getBoundingSphere(new THREE.Sphere).radius,controls.target.copy(modelCenter);const d=THREE.MathUtils.degToRad(camera.fov),c=Math.max(modelRadius/Math.sin(d/2)*1.15,2.5);camera.position.set(modelCenter.x+.5*c,modelCenter.y+.2*c,modelCenter.z+c),camera.near=Math.max(c/1e3,.01),camera.far=100*c,camera.updateProjectionMatrix(),controls.minDistance=Math.max(1.05*modelRadius,.1),controls.maxDistance=Math.max(10*modelRadius,10),controls.update();const m=Math.max(2*modelRadius,2);keyLight.shadow.camera.left=-m,keyLight.shadow.camera.right=m,keyLight.shadow.camera.top=m,keyLight.shadow.camera.bottom=-m,keyLight.shadow.camera.near=.1,keyLight.shadow.camera.far=4*c,keyLight.shadow.camera.updateProjectionMatrix(),keyLight.target.position.copy(modelCenter),scene.add(keyLight.target)}catch(e){console.error("Failed to load model:",e)}}function zoom(e){const o=camera.position.clone().sub(controls.target);o.multiplyScalar(e);const t=o.length();t<controls.minDistance?o.setLength(controls.minDistance):t>controls.maxDistance&&o.setLength(controls.maxDistance),camera.position.copy(controls.target).add(o),controls.update()}loadModel(),document.getElementById("zoom-in").addEventListener("click",()=>{zoom(.8)}),document.getElementById("zoom-out").addEventListener("click",()=>{zoom(1.25)}),window.addEventListener("keydown",e=>{"+"===e.key||"="===e.key?zoom(.8):"-"===e.key&&zoom(1.25)}),renderer.setAnimationLoop(()=>{controls.update(),renderer.render(scene,camera)}),window.addEventListener("resize",()=>{camera.aspect=window.innerWidth/window.innerHeight,camera.updateProjectionMatrix(),renderer.setSize(window.innerWidth,window.innerHeight),renderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5))});
+    </script>
+
+</body>
+</html>
+
