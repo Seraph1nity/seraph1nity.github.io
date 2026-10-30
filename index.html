@@ -27,35 +27,37 @@
     </script>
 
     <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-        }
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    width: 100%;
+    min-height: 100%;
+}
 
-        html {
-            background: center / cover no-repeat;
-        }
+html {
+    background: center / cover no-repeat;
+}
 
-        #imgui-canvas {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-        }
+#imgui-canvas {
+    display: block;
+    width: 100%;
+    height: 100dvh;
+    touch-action: pan-y;
+}
 
-        #three-container {
-            width: 100%;
-            height: 300px;
-            overflow: hidden;
-        }
+#three-container {
+    width: 100%;
+    height: 300px;
+    overflow: hidden;
+}
 
-        #three-container canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
+#three-container canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
     </style>
 </head>
 <body>

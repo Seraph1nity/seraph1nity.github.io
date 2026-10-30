@@ -191,13 +191,13 @@ function copyLink(label, text = label) {
 function inline(...parts) {
     parts.forEach((part, i) => {
         if (i > 0) ImGui.SameLine();
-        if (typeof part === "string") ImGui.Text(part);
+        if (typeof part === "string") ImGui.TextWrapped(part);
         else link(...part);
     });
 }
 
 function answer(question, reply) {
-    ImGui.Text(question);
+    ImGui.TextWrapped(question);
     ImGui.SameLine();
     ImGui.TextDisabled(reply);
 }
@@ -211,51 +211,66 @@ function image(texture, scale) {
 
 // windows
 
-const windowMargin = 10;
-const windowGap = 3;
+const windowMargin = 8;
+const windowGap = 5;
+
 let nextLeftY = windowMargin;
 let nextRightY = windowMargin;
 
-
-function drawWindow(title, drawContents, maybeside = "left", width = 0) {
+function drawWindow(title, drawContents, side = "left", desktopWidth = 0) {
     const canvas = document.querySelector("#imgui-canvas");
-    const isRight = maybeside === "right";
+
+    const mobile = canvas.clientWidth < 700;
+    const width = canvas.clientWidth;
+
+    const isRight = !mobile && side === "right";
+
+    const windowWidth = mobile
+        ? width - windowMargin * 2
+        : desktopWidth;
+
+    const x = mobile
+        ? windowMargin
+        : isRight ? width - windowMargin : windowMargin;
+
+    const y = mobile
+        ? nextLeftY
+        : isRight ? nextRightY : nextLeftY;
 
     ImGui.SetNextWindowPos(
-        new ImVec2(
-            isRight ? canvas.clientWidth - windowMargin : windowMargin,
-            isRight ? nextRightY : nextLeftY
-        ),
-        ImGui.Cond.FirstUseEver,
+        new ImVec2(x, y),
+        ImGui.Cond.Always,
         new ImVec2(isRight ? 1 : 0, 0)
     );
 
-    if (width > 0) {
-        ImGui.SetNextWindowSize(
-            new ImVec2(width, 0),
-            ImGui.Cond.FirstUseEver
-        );
-    }
+    ImGui.SetNextWindowSize(
+        new ImVec2(windowWidth > 0 ? windowWidth : 0, 0),
+        ImGui.Cond.Always
+    );
 
     ImGui.SetNextWindowCollapsed(
-      title !== "music player",
-      ImGui.Cond.FirstUseEver
+        title !== "music player",
+        ImGui.Cond.FirstUseEver
     );
-    if (ImGui.Begin(title, null, ImGui.WindowFlags.AlwaysAutoResize)) {
+
+    if (ImGui.Begin(
+        title,
+        null,
+        ImGui.WindowFlags.NoMove |
+        ImGui.WindowFlags.NoResize |
+        ImGui.WindowFlags.NoSavedSettings
+    )) {
         drawContents();
     }
 
-    const nextY = (isRight ? nextRightY : nextLeftY)
-        + ImGui.GetWindowHeight() + windowGap;
+    const nextY = y + ImGui.GetWindowHeight() + windowGap;
 
-    if (isRight) {
-        nextRightY = nextY;
-    } else {
-        nextLeftY = nextY;
-    }
-
+    if (mobile || !isRight) {nextLeftY = nextY;} else {nextRightY = nextY;}
     ImGui.End();
 }
+
+
+
 
 
 function drawAbout() {
@@ -264,9 +279,9 @@ function drawAbout() {
     ImGui.EndGroup();
     ImGui.SameLine(0, 8);
     ImGui.BeginGroup();
-    ImGui.Text("hi, i'm Sera.\ni like eating hydrogen (irony)\ni like programming in Rust,Python,Javascript,Lua and CSharp (Rust and Lua being my fav langs)\nwawaborean");
+    ImGui.TextWrapped("hi, i'm Sera.\ni like eating hydrogen (irony)\ni like programming in Rust,Python,Javascript,Lua and CSharp (Rust and Lua being my fav langs)\nwawaborean");
     ImGui.Spacing();
-    ImGui.Text(`my time: ${fattytime.format()}\nmy lovely weather: ${weather}`);
+    ImGui.TextWrapped(`my time: ${fattytime.format()}\nmy lovely weather: ${weather}`);
     ImGui.EndGroup();
 }
 
@@ -281,9 +296,9 @@ function drawProjects() {
     }
 
     if (ImGui.TreeNode("devtools neo")) {
-        ImGui.Text("very dead project, a security fowarded clientside hub with the idea of anti logging and decoding");
-        ImGui.Text("was mostly just a bunch of functions fused in a hub but with a custom ui lol and very pro custom api");
-        ImGui.Text("devtools isnt coming back any time soon (whole server dead and source deleted)");
+        ImGui.TextWrapped("very dead project, a security fowarded clientside hub with the idea of anti logging and decoding");
+        ImGui.TextWrapped("was mostly just a bunch of functions fused in a hub but with a custom ui lol and very pro custom api");
+        ImGui.TextWrapped("devtools isnt coming back any time soon (whole server dead and source deleted)");
         ImGui.TreePop();
     }
 
@@ -326,7 +341,7 @@ function drawExtras() {
       ImGui.Spacing();
       const geen = (120 | (153 << 8) | (34 << 16) | (255 << 24)) >>> 0;
       ImGui.PushStyleColor(ImGui.Col.Text, geen);
-      for (const quote of quotes){ ImGui.Text("> " + quote);};
+      for (const quote of quotes){ ImGui.TextWrapped("> " + quote);};
       ImGui.PopStyleColor();
       ImGui.TreePop();
   }
