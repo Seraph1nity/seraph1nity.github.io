@@ -173,7 +173,10 @@ function loadTexture(src) {
 }
 
 const textures = {
-    pfp: loadTexture("assets/img/pfp.gif"),
+  pfp: loadTexture("assets/img/pfp.gif"),
+  armer: loadTexture("assets/img/ARMer.png"),
+  proton: loadTexture("assets/img/Proton.png"),
+  skidbar: loadTexture('assets/img/skidbar.webp')
 };
 
 const trackIcons = playlist.map(track => loadTexture(track.icon));
@@ -298,20 +301,22 @@ function drawProjects() {
 
     if (ImGui.TreeNode("protonservices")) {
         inline("a little project for roblox i made with multiple cool services to add up with roblox's ones");
+        image(textures.proton, 1.25)
         inline("repository link:", ["https://github.com/The-Bunker-Organization/"]);
         ImGui.TreePop();
     }
 
-    if (ImGui.TreeNode("devtools neo")) {
-        ImGui.TextWrapped("very dead project, a security fowarded clientside hub with the idea of anti logging and decoding");
-        ImGui.TextWrapped("was mostly just a bunch of functions fused in a hub but with a custom ui lol and very pro custom api");
-        ImGui.TextWrapped("devtools isnt coming back any time soon (whole server dead and source deleted)");
+    if (ImGui.TreeNode("skidbar.ru")) {
+        ImGui.TextWrapped("very dead serverside,used to have a lot of good games (1m - 7m) because of two methods i discovered to infect games with certain models ");
+        image(textures.skidbar, 1 / 4)
+        ImGui.TextWrapped("it was mostly just a admin bar with a LOT of commands,requires,rare converted scripts and some cool techs (now opensource on protonservices)");
+        ImGui.TextWrapped("skidbar isnt coming back any time soon because of the state of roblox and the serverside community itself");
         ImGui.TreePop();
     }
 
     if (ImGui.TreeNode("ARMer")) {
       inline("VM obfuscation for luaU with macros and a very kewl anti-env (woah)");
-      //image()
+      image(textures.armer, 1 / 4)
       inline("while it is in beta with no support for sUnc or chunk loading plus having a lazy bytecode fragmentation,it cant be deobfuscated by ExoEnv!!!!!!! (no AIs skidding my code) ");
       inline("it is currently private and only usable by whitelisted people,so yeah,if you wanna try making it yourself :p")
       ImGui.TreePop()
@@ -420,9 +425,7 @@ function render() {
   drawWindow("contact", drawContact, "left");
   drawWindow("extras", drawExtras, "left");
   drawWindow("music player", drawMusicPlayer, "left");
-
-
-//   drawWindow("newsletters", drawBlog,"right",400)
+  //   drawWindow("newsletters", drawBlog,"right",400)
   ImGuiImplWeb.EndRender();
   requestAnimationFrame(render);
 }
