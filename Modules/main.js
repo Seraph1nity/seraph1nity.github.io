@@ -191,9 +191,16 @@ function copyLink(label, text = label) {
 function inline(...parts) {
     parts.forEach((part, i) => {
         if (i > 0) ImGui.SameLine();
-        if (typeof part === "string") ImGui.TextWrapped(part);
-        else link(...part);
+        if (typeof part === "string") {
+            ImGui.Text(part);
+        } else {
+            link(...part);
+        }
     });
+}
+
+function paragraph(text) {
+    ImGui.TextWrapped(text);
 }
 
 function answer(question, reply) {
@@ -220,7 +227,7 @@ let nextRightY = windowMargin;
 function drawWindow(title, drawContents, side = "left", desktopWidth = 0) {
     const canvas = document.querySelector("#imgui-canvas");
 
-    const mobile = canvas.clientWidth < 700;
+    const mobile = canvas.clientWidth < 800;
     const width = canvas.clientWidth;
 
     const isRight = !mobile && side === "right";
@@ -270,18 +277,18 @@ function drawWindow(title, drawContents, side = "left", desktopWidth = 0) {
 }
 
 
-
-
-
 function drawAbout() {
     ImGui.BeginGroup();
     image(textures.pfp, 1 / 3);
     ImGui.EndGroup();
     ImGui.SameLine(0, 8);
     ImGui.BeginGroup();
-    ImGui.TextWrapped("hi, i'm Sera.\ni like eating hydrogen (irony)\ni like programming in Rust,Python,Javascript,Lua and CSharp (Rust and Lua being my fav langs)\nwawaborean");
+    const wrapWidth = 240
+    ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + wrapWidth);
+    ImGui.TextWrapped("hi, i'm Sera.\n"+"i like eating hydrogen (irony)\n"+"i like programming in Rust,Python,Javascript,Lua and CSharp (Rust and Lua being my fav langs)\n" + "wawaborean");
     ImGui.Spacing();
     ImGui.TextWrapped(`my time: ${fattytime.format()}\nmy lovely weather: ${weather}`);
+    ImGui.PopTextWrapPos();
     ImGui.EndGroup();
 }
 
